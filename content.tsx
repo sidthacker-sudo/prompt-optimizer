@@ -2574,7 +2574,8 @@ function attach() {
       lastAIResponse = ""
 
       // Clear the composer text on new chat
-      setTimeout(() => {
+      // Use multiple attempts because ChatGPT/Claude might restore drafts
+      const clearComposer = () => {
         const composer = getComposer()
         if (composer && getText(composer).trim()) {
           // Detect if navigating to a new chat (not an existing conversation)
@@ -2584,11 +2585,16 @@ function attach() {
           const isNewChatUrl = currentUrl.includes("/new") || !hasConversationId
 
           if (isNewChatUrl) {
-            console.log("[CWC] New chat detected, clearing composer")
+            console.log("[CWC] New chat detected, clearing composer:", getText(composer).substring(0, 50))
             setText(composer, "")
           }
         }
-      }, 50)
+      }
+
+      // Try multiple times as ChatGPT/Claude restore drafts async
+      setTimeout(clearComposer, 50)
+      setTimeout(clearComposer, 200)
+      setTimeout(clearComposer, 500)
 
       // Multiple retries with increasing delays for better reliability
       setTimeout(() => attach(), 100)
