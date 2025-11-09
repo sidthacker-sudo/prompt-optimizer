@@ -2567,8 +2567,16 @@ function attach() {
     if (currentUrl !== lastUrl) {
       console.log("[CWC] URL changed, re-attaching buttons:", currentUrl)
       lastUrl = currentUrl
-      // Small delay to let the page render
+
+      // Clear state when navigating to new chat
+      lastOriginalPrompt = ""
+      lastScoreData = null
+      lastAIResponse = ""
+
+      // Multiple retries with increasing delays for better reliability
       setTimeout(() => attach(), 100)
+      setTimeout(() => attach(), 300)
+      setTimeout(() => attach(), 600)
     }
   }
 
