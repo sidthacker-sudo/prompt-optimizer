@@ -2573,6 +2573,23 @@ function attach() {
       lastScoreData = null
       lastAIResponse = ""
 
+      // Clear the composer text on new chat
+      setTimeout(() => {
+        const composer = getComposer()
+        if (composer && getText(composer).trim()) {
+          // Detect if navigating to a new chat (not an existing conversation)
+          // ChatGPT: chatgpt.com/ or chatgpt.com/c/ or chatgpt.com/c (no ID)
+          // Claude: claude.ai/new or claude.ai/chat/ (no ID after)
+          const hasConversationId = currentUrl.match(/\/(chat|c)\/[a-f0-9-]{8,}/i)
+          const isNewChatUrl = currentUrl.includes("/new") || !hasConversationId
+
+          if (isNewChatUrl) {
+            console.log("[CWC] New chat detected, clearing composer")
+            setText(composer, "")
+          }
+        }
+      }, 50)
+
       // Multiple retries with increasing delays for better reliability
       setTimeout(() => attach(), 100)
       setTimeout(() => attach(), 300)
