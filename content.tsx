@@ -2142,10 +2142,12 @@ function ensureEmbeddedButtons() {
   const panelId = "cwc-embed-panel"
   const nextId = "cwc-embed-next"
   const clearId = "cwc-embed-clear"
+  const wrapperId = "cwc-button-wrapper"
 
-  // If all buttons already exist AND are still in the DOM, skip
-  const existing = document.getElementById(improveId)
-  if (existing && existing.parentElement &&
+  // If wrapper exists and is in DOM with all buttons, skip
+  let wrapper = document.getElementById(wrapperId) as HTMLDivElement | null
+  if (wrapper && wrapper.parentElement &&
+      document.getElementById(improveId) &&
       document.getElementById(panelId) &&
       document.getElementById(nextId) &&
       document.getElementById(clearId)) {
@@ -2168,10 +2170,20 @@ function ensureEmbeddedButtons() {
     return
   }
 
+  // Wrap all buttons in a container div to avoid React conflicts
+  if (!wrapper) {
+    wrapper = document.createElement("div")
+    wrapper.id = wrapperId
+    wrapper.style.display = "flex"
+    wrapper.style.gap = "8px"
+    wrapper.style.alignItems = "center"
+    container.appendChild(wrapper)
+  }
+
   let improve = document.getElementById(improveId) as HTMLButtonElement | null
   if (!improve) {
     improve = makeIconButton(improveId, "Improve Prompt", "Optimize")
-    container.appendChild(improve)
+    wrapper.appendChild(improve)
     improve.addEventListener("click", handleImproveClick)
   }
 
@@ -2181,14 +2193,14 @@ function ensureEmbeddedButtons() {
     next.disabled = !hasConversation
     next.style.opacity = hasConversation ? "1" : "0.5"
     next.style.cursor = hasConversation ? "pointer" : "not-allowed"
-    container.appendChild(next)
+    wrapper.appendChild(next)
     next.addEventListener("click", handleNextClick)
   }
 
   let panel = document.getElementById(panelId) as HTMLButtonElement | null
   if (!panel) {
     panel = makeIconButton(panelId, "Open Panel", "Panel")
-    container.appendChild(panel)
+    wrapper.appendChild(panel)
     panel.addEventListener("click", () => {
       toggleSidebar()
       const open = ensureSidebar().style.display !== "none"
@@ -2201,7 +2213,7 @@ function ensureEmbeddedButtons() {
   if (!clear) {
     clear = makeIconButton(clearId, "Clear Draft", "Clear")
     clear.style.opacity = "0.7"
-    container.appendChild(clear)
+    wrapper.appendChild(clear)
     clear.addEventListener("click", () => {
       const composer = getComposer()
       if (composer) {
