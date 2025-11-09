@@ -1,7 +1,7 @@
 {
   "name": "prompt-optimizer",
   "displayName": "Prompt Optimizer",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Professional prompt optimization tool for ChatGPT and Claude. Improve your prompts, save templates, and optimize your AI conversations.",
   "author": "Prompt Optimizer",
   "scripts": {

@@ -2562,10 +2562,20 @@ function attach() {
 
   // Watch for URL changes (SPA navigation like "New Chat")
   let lastUrl = location.href
+
   const checkUrlChange = () => {
     const currentUrl = location.href
     if (currentUrl !== lastUrl) {
-      console.log("[CWC] URL changed, re-attaching buttons:", currentUrl)
+      console.log("[CWC] URL changed from", lastUrl, "to", currentUrl)
+
+      // Check if we're navigating FROM a conversation TO a new chat
+      const previousHadId = lastUrl.match(/\/(chat|c)\/[a-f0-9-]{8,}/i)
+      const currentHasId = currentUrl.match(/\/(chat|c)\/[a-f0-9-]{8,}/i)
+      const isNewChatUrl = currentUrl.includes("/new") || (!currentHasId && currentUrl.includes("chatgpt.com"))
+
+      // Only clear if we had a conversation before and now going to new chat
+      const shouldClear = previousHadId && isNewChatUrl
+
       lastUrl = currentUrl
 
       // Clear state when navigating to new chat
@@ -2573,28 +2583,22 @@ function attach() {
       lastScoreData = null
       lastAIResponse = ""
 
-      // Clear the composer text on new chat
-      // Use multiple attempts because ChatGPT/Claude might restore drafts
-      const clearComposer = () => {
-        const composer = getComposer()
-        if (composer && getText(composer).trim()) {
-          // Detect if navigating to a new chat (not an existing conversation)
-          // ChatGPT: chatgpt.com/ or chatgpt.com/c/ or chatgpt.com/c (no ID)
-          // Claude: claude.ai/new or claude.ai/chat/ (no ID after)
-          const hasConversationId = currentUrl.match(/\/(chat|c)\/[a-f0-9-]{8,}/i)
-          const isNewChatUrl = currentUrl.includes("/new") || !hasConversationId
-
-          if (isNewChatUrl) {
-            console.log("[CWC] New chat detected, clearing composer:", getText(composer).substring(0, 50))
+      // Only clear composer if navigating from existing chat to new chat
+      if (shouldClear) {
+        console.log("[CWC] Navigating from conversation to new chat, clearing composer")
+        const clearComposer = () => {
+          const composer = getComposer()
+          if (composer && getText(composer).trim()) {
+            console.log("[CWC] Clearing:", getText(composer).substring(0, 50))
             setText(composer, "")
           }
         }
-      }
 
-      // Try multiple times as ChatGPT/Claude restore drafts async
-      setTimeout(clearComposer, 50)
-      setTimeout(clearComposer, 200)
-      setTimeout(clearComposer, 500)
+        // Try multiple times as ChatGPT/Claude restore drafts async
+        setTimeout(clearComposer, 50)
+        setTimeout(clearComposer, 200)
+        setTimeout(clearComposer, 500)
+      }
 
       // Multiple retries with increasing delays for better reliability
       setTimeout(() => attach(), 100)
