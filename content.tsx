@@ -2141,12 +2141,14 @@ function ensureEmbeddedButtons() {
   const improveId = "cwc-embed-improve"
   const panelId = "cwc-embed-panel"
   const nextId = "cwc-embed-next"
+  const clearId = "cwc-embed-clear"
 
   // If all buttons already exist AND are still in the DOM, skip
   const existing = document.getElementById(improveId)
   if (existing && existing.parentElement &&
       document.getElementById(panelId) &&
-      document.getElementById(nextId)) {
+      document.getElementById(nextId) &&
+      document.getElementById(clearId)) {
     return
   }
 
@@ -2187,6 +2189,21 @@ function ensureEmbeddedButtons() {
       toggleSidebar()
       const open = ensureSidebar().style.display !== "none"
       panel!.textContent = open ? "Close" : "Panel"
+    })
+  }
+
+  // Add Clear button to manually clear drafts
+  let clear = document.getElementById(clearId) as HTMLButtonElement | null
+  if (!clear) {
+    clear = makeIconButton(clearId, "Clear Draft", "Clear")
+    clear.style.opacity = "0.7"
+    container.appendChild(clear)
+    clear.addEventListener("click", () => {
+      const composer = getComposer()
+      if (composer) {
+        setText(composer, "")
+        toast("Draft cleared")
+      }
     })
   }
 }
