@@ -2160,7 +2160,11 @@ function ensureEmbeddedButtons() {
         : null
 
   if (!container) {
-    console.log("[CWC] Toolbar container not found, will retry on next mutation")
+    console.log(`[CWC] Toolbar container not found for ${SITE}, will retry`)
+    // Log what we can find to help debug
+    const form = document.querySelector('form')
+    const sendBtn = document.querySelector('button[type="submit"]')
+    console.log(`[CWC] Debug: form=${!!form}, sendBtn=${!!sendBtn}`)
     return
   }
 
@@ -2566,9 +2570,47 @@ function handleImproveClick() {
 // ---------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------
+let attachRetryCount = 0
+const MAX_ATTACH_RETRIES = 10 // 10 retries × 500ms = 5 seconds max
+
 function attach() {
   ensureEmbeddedButtons()
   detectAIResponse()
+}
+
+function attachWithRetry() {
+  attachRetryCount = 0
+  tryAttach()
+}
+
+function tryAttach() {
+  // Check if buttons are already attached and in DOM
+  const improveBtn = document.getElementById("cwc-embed-improve")
+  const isAttached = improveBtn && improveBtn.parentElement
+
+  if (isAttached) {
+    console.log("[CWC] Buttons already attached, stopping retries")
+    attachRetryCount = 0
+    return
+  }
+
+  console.log(`[CWC] Attach attempt ${attachRetryCount + 1}/${MAX_ATTACH_RETRIES}`)
+  attach()
+
+  // Check if attach succeeded
+  const improveAfter = document.getElementById("cwc-embed-improve")
+  const succeeded = improveAfter && improveAfter.parentElement
+
+  if (succeeded) {
+    console.log("[CWC] Buttons attached successfully!")
+    attachRetryCount = 0
+  } else if (attachRetryCount < MAX_ATTACH_RETRIES) {
+    attachRetryCount++
+    setTimeout(tryAttach, 500)
+  } else {
+    console.log("[CWC] Max retries reached, giving up")
+    attachRetryCount = 0
+  }
 }
 
 ;(function main() {
@@ -2617,10 +2659,8 @@ function attach() {
         setTimeout(clearComposer, 500)
       }
 
-      // Multiple retries with increasing delays for better reliability
-      setTimeout(() => attach(), 100)
-      setTimeout(() => attach(), 300)
-      setTimeout(() => attach(), 600)
+      // Start persistent retry mechanism
+      attachWithRetry()
     }
   }
 
