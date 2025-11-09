@@ -2559,6 +2559,31 @@ function attach() {
   attach()
   const obs = new MutationObserver(() => attach())
   obs.observe(document.documentElement, { subtree: true, childList: true })
+
+  // Watch for URL changes (SPA navigation like "New Chat")
+  let lastUrl = location.href
+  const checkUrlChange = () => {
+    const currentUrl = location.href
+    if (currentUrl !== lastUrl) {
+      console.log("[CWC] URL changed, re-attaching buttons:", currentUrl)
+      lastUrl = currentUrl
+      // Small delay to let the page render
+      setTimeout(() => attach(), 100)
+    }
+  }
+
+  // Listen for popstate (back/forward) and patch history methods
+  window.addEventListener("popstate", checkUrlChange)
+  const originalPushState = history.pushState
+  const originalReplaceState = history.replaceState
+  history.pushState = function (...args) {
+    originalPushState.apply(this, args)
+    checkUrlChange()
+  }
+  history.replaceState = function (...args) {
+    originalReplaceState.apply(this, args)
+    checkUrlChange()
+  }
 })()
 
 export default function ContentScript() {
